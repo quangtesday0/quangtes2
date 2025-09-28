@@ -1,43 +1,221 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Trắc nghiệm trực tiếp</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Trắc nghiệm đơn giản</title>
+  <style>
+    :root{--bg:#f6f8fb;--card:#fff;--accent:#0b69ff}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;margin:0;background:var(--bg);color:#111}
+    .container{max-width:900px;margin:28px auto;padding:20px}
+    .card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(10,10,10,0.06)}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    h1{margin:0;font-size:20px}
+    button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+    input[type=file]{display:none}
+    .question{border-radius:10px;padding:12px;margin:12px 0}
+    .choices{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .choice{display:flex;align-items:center;gap:8px}
+    .small{font-size:13px;color:#666}
+    .status{padding:6px 8px;border-radius:8px;font-weight:600}
+    .green{background:#e6fff0;color:#006d2b}
+    .red{background:#fff0f0;color:#9b1c1c}
+    textarea{width:100%;height:110px;border-radius:8px;padding:10px;border:1px solid #ddd}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    .import-area{margin-top:12px}
+    .meta{display:flex;gap:8px;align-items:center}
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>Trắc nghiệm hiển thị đáp án ngay</h1>
-    
-    <!-- Nút tráo câu hỏi -->
-    <button type="button" id="shuffleBtn">🔀 Tráo câu hỏi</button>
+    <div class="card">
+      <header>
+        <div>
+          <h1>Web trắc nghiệm đơn giản</h1>
+          <div class="small">Tải lên JSON/CSV hoặc dán dữ liệu (xem mẫu dưới)</div>
+        </div>
+        <div class="meta">
+          <label for="file-input" style="cursor:pointer"><button>Import file</button></label>
+          <input id="file-input" type="file" accept="application/json,text/csv" />
+          <button id="reset">Xóa dữ liệu</button>
+        </div>
+      </header>
 
-    <form id="quizForm"></form>
+      <section class="import-area">
+        <div class="small">Dán JSON ở đây (mẫu có bên dưới):</div>
+        <textarea id="paste-area" placeholder='[{"q":"Câu hỏi...","choices":["A","B","C","D"],"answer":1}]'></textarea>
+        <div style="margin-top:8px" class="controls">
+          <button id="load-json">Tải JSON</button>
+          <button id="load-csv">Tải CSV</button>
+          <button id="edit-mode">Chế độ sửa</button>
+        </div>
+        <div class="small" style="margin-top:10px">Mẫu JSON: <code>[{"q":"Câu 1?","choices":["a","b","c"],"answer":0}]</code> — <span class="small">answer là chỉ số (0-based) đáp án đúng</span></div>
+      </section>
+
+      <hr style="margin:16px 0;border:none;border-top:1px solid #eee" />
+
+      <div id="quiz-area"></div>
+
+      <div id="result" style="margin-top:12px"></div>
+
+    </div>
   </div>
 
-  <script src="script.js"></script>
-  <script>
-// Chặn chuột phải
-document.addEventListener("contextmenu", function(e) {
-  e.preventDefault();
+<script>
+// Simple quiz app that accepts JSON or CSV
+let questions = [];
+let editMode = false;
+const quizArea = document.getElementById('quiz-area');
+const resultBox = document.getElementById('result');
+const pasteArea = document.getElementById('paste-area');
+const fileInput = document.getElementById('file-input');
+
+function renderQuiz(){
+  quizArea.innerHTML = '';
+  resultBox.innerHTML = '';
+  if(!questions.length){
+    quizArea.innerHTML = '<div class="small">Chưa có câu hỏi. Dán JSON hoặc import file để bắt đầu.</div>';
+    return;
+  }
+
+  questions.forEach((q, idx) => {
+    const div = document.createElement('div');
+    div.className = 'question card';
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong>Câu ${idx+1}.</strong> ${escapeHtml(q.q || '')}</div>
+        <div class="small">${q.points ? q.points + ' điểm' : ''}</div>
+      </div>
+      <div class="choices" id="choices-${idx}"></div>
+      <div style="margin-top:8px" id="feedback-${idx}"></div>
+    `;
+    quizArea.appendChild(div);
+
+    const choicesDiv = document.getElementById(`choices-${idx}`);
+    (q.choices || []).forEach((c, ci) =>{
+      const id = `q${idx}_c${ci}`;
+      const wrapper = document.createElement('label');
+      wrapper.className = 'choice';
+      wrapper.innerHTML = `<input type="radio" name="q${idx}" value="${ci}" id="${id}" /> <span>${escapeHtml(c)}</span>`;
+      choicesDiv.appendChild(wrapper);
+    });
+
+  });
+
+  const submit = document.createElement('div');
+  submit.style.marginTop = '12px';
+  submit.innerHTML = '<button id="submit">Nộp bài</button> <button id="show-answers">Hiển thị đáp án</button>';
+  quizArea.appendChild(submit);
+
+  document.getElementById('submit').onclick = gradeQuiz;
+  document.getElementById('show-answers').onclick = showAnswers;
+}
+
+function gradeQuiz(){
+  let correct = 0;
+  questions.forEach((q, idx)=>{
+    const radios = document.getElementsByName(`q${idx}`);
+    let selected = -1;
+    for(const r of radios) if(r.checked) selected = Number(r.value);
+    const fb = document.getElementById(`feedback-${idx}`);
+    if(selected === q.answer){
+      correct++;
+      fb.innerHTML = `<div class="status green">Đúng</div>`;
+    } else {
+      fb.innerHTML = `<div class="status red">Sai. Đáp án đúng: ${escapeHtml((q.choices||[])[q.answer]||'')}</div>`;
+    }
+  });
+  resultBox.innerHTML = `<div class="card" style="margin-top:12px;padding:12px">Bạn được ${correct}/${questions.length} điểm (${Math.round(correct/questions.length*100)}%)</div>`;
+}
+
+function showAnswers(){
+  questions.forEach((q, idx)=>{
+    const fb = document.getElementById(`feedback-${idx}`);
+    fb.innerHTML = `<div class="small">Đáp án: ${escapeHtml((q.choices||[])[q.answer]||'')}</div>`;
+  });
+}
+
+function loadJSONText(txt){
+  try{
+    const parsed = JSON.parse(txt);
+    if(!Array.isArray(parsed)) throw new Error('JSON phải là mảng');
+    questions = parsed.map(item => ({
+      q: item.q || item.question || '',
+      choices: item.choices || item.options || [],
+      answer: (typeof item.answer === 'number') ? item.answer : Number(item.correctIndex || 0),
+      points: item.points || 0
+    }));
+    renderQuiz();
+  }catch(e){
+    alert('Lỗi khi đọc JSON: '+e.message);
+  }
+}
+
+function loadCSVText(txt){
+  // Simple CSV format: q,choice1,choice2,choice3,...,answerIndex
+  const lines = txt.split(/\r?\n/).map(l=>l.trim()).filter(l=>l);
+  const arr = lines.map(l=>{
+    // split by comma but naive
+    const parts = l.split(',').map(p=>p.trim());
+    const answer = Number(parts[parts.length-1]);
+    const choices = parts.slice(1, parts.length-1);
+    return {q: parts[0], choices, answer};
+  });
+  questions = arr;
+  renderQuiz();
+}
+
+// file input
+fileInput.addEventListener('change', (e)=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const txt = reader.result;
+    if(f.name.endsWith('.json')) loadJSONText(txt);
+    else loadCSVText(txt);
+  };
+  reader.readAsText(f);
 });
 
-// Chặn phím F12, Ctrl+Shift+I, Ctrl+U
-document.addEventListener("keydown", function(e) {
-  // F12
-  if (e.key === "F12") {
-    e.preventDefault();
+// buttons
+document.getElementById('load-json').onclick = ()=>{
+  loadJSONText(pasteArea.value);
+};
+
+document.getElementById('load-csv').onclick = ()=>{
+  loadCSVText(pasteArea.value);
+};
+
+document.getElementById('reset').onclick = ()=>{
+  if(confirm('Xóa toàn bộ câu hỏi?')){questions=[];renderQuiz();pasteArea.value='';}
+};
+
+document.getElementById('edit-mode').onclick = ()=>{
+  // simple edit: export current questions to JSON in the textarea for editing
+  pasteArea.value = JSON.stringify(questions, null, 2);
+  alert('Dữ liệu hiện đã được đưa vào ô dán để bạn chỉnh sửa. Sau khi chỉnh xong bấm "Tải JSON".');
+};
+
+function escapeHtml(s){
+  if(!s) return '';
+  return s.replace(/[&<>\"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+}
+
+// On load: try to load from localStorage
+window.addEventListener('load', ()=>{
+  const saved = localStorage.getItem('quiz_data');
+  if(saved){
+    try{ questions = JSON.parse(saved); }catch(e){questions=[]}
   }
-  // Ctrl+Shift+I
-  if (e.ctrlKey && e.shiftKey && e.key === "I") {
-    e.preventDefault();
-  }
-  // Ctrl+U (xem source)
-  if (e.ctrlKey && e.key === "u") {
-    e.preventDefault();
-  }
+  renderQuiz();
 });
+
+// Save to localStorage when leaving
+window.addEventListener('beforeunload', ()=>{
+  try{ localStorage.setItem('quiz_data', JSON.stringify(questions)); }catch(e){}
+});
+
 </script>
 </body>
 </html>
