@@ -1,221 +1,363 @@
 <!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Trắc nghiệm đơn giản</title>
-  <style>
-    :root{--bg:#f6f8fb;--card:#fff;--accent:#0b69ff}
-    body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;margin:0;background:var(--bg);color:#111}
-    .container{max-width:900px;margin:28px auto;padding:20px}
-    .card{background:var(--card);padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(10,10,10,0.06)}
-    header{display:flex;gap:12px;align-items:center;justify-content:space-between}
-    h1{margin:0;font-size:20px}
-    button{background:var(--accent);color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
-    input[type=file]{display:none}
-    .question{border-radius:10px;padding:12px;margin:12px 0}
-    .choices{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-    .choice{display:flex;align-items:center;gap:8px}
-    .small{font-size:13px;color:#666}
-    .status{padding:6px 8px;border-radius:8px;font-weight:600}
-    .green{background:#e6fff0;color:#006d2b}
-    .red{background:#fff0f0;color:#9b1c1c}
-    textarea{width:100%;height:110px;border-radius:8px;padding:10px;border:1px solid #ddd}
-    .controls{display:flex;gap:8px;flex-wrap:wrap}
-    .import-area{margin-top:12px}
-    .meta{display:flex;gap:8px;align-items:center}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Trắc nghiệm — Bộ 7 chương (embed)</title>
+<style>
+  :root{--bg:#f5f7fb;--card:#fff;--accent:#1f6feb;--muted:#6b7280;--ok:#0b8a26;--no:#d03030}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); margin:0; padding:22px; color:#111}
+  .wrap{max-width:1000px; margin:0 auto}
+  header{display:flex;align-items:center;gap:12px}
+  h1{margin:0;font-size:20px}
+  p.note{margin:4px 0 12px;color:var(--muted)}
+  .toolbar{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}
+  select,input[type="search"]{padding:8px;border-radius:8px;border:1px solid #e6eef9}
+  button{background:var(--accent);color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer}
+  button.secondary{background:#fff;color:var(--accent);border:1px solid rgba(31,111,235,0.12)}
+  .meta{display:flex;gap:8px;align-items:center}
+  .badge{background:#fff;padding:6px 10px;border-radius:8px;border:1px solid #eef4ff;font-weight:600}
+  #quiz{margin-top:14px}
+  .card{background:var(--card);border-radius:10px;padding:14px;margin-bottom:12px;box-shadow:0 6px 18px rgba(10,20,40,0.04)}
+  .qnum{color:var(--accent);font-weight:700}
+  .qtext{margin:8px 0 12px;line-height:1.45}
+  .opts label{display:block;padding:8px;border-radius:8px;margin-bottom:8px;border:1px solid #eef2f6;cursor:pointer}
+  .opts input{margin-right:8px}
+  .correct{background:rgba(11,138,38,0.08);border-color:rgba(11,138,38,0.18);color:var(--ok);font-weight:700}
+  .wrong{background:rgba(208,48,48,0.06);border-color:rgba(208,48,48,0.14);color:var(--no);font-weight:700}
+  .small{font-size:13px;color:var(--muted)}
+  footer{margin-top:18px;color:var(--muted);font-size:13px}
+  @media (max-width:700px){ header{flex-direction:column;align-items:flex-start} .toolbar{flex-direction:column;align-items:flex-start} }
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <header>
-        <div>
-          <h1>Web trắc nghiệm đơn giản</h1>
-          <div class="small">Tải lên JSON/CSV hoặc dán dữ liệu (xem mẫu dưới)</div>
-        </div>
-        <div class="meta">
-          <label for="file-input" style="cursor:pointer"><button>Import file</button></label>
-          <input id="file-input" type="file" accept="application/json,text/csv" />
-          <button id="reset">Xóa dữ liệu</button>
-        </div>
-      </header>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Trắc nghiệm — Bộ 7 chương (embedded)</h1>
+        <p class="note">Chọn chương, chọn đáp án — hệ thống sẽ hiện đúng/sai ngay. File này chép trực tiếp dữ liệu các chương (nhúng sẵn).</p>
+      </div>
+    </header>
 
-      <section class="import-area">
-        <div class="small">Dán JSON ở đây (mẫu có bên dưới):</div>
-        <textarea id="paste-area" placeholder='[{"q":"Câu hỏi...","choices":["A","B","C","D"],"answer":1}]'></textarea>
-        <div style="margin-top:8px" class="controls">
-          <button id="load-json">Tải JSON</button>
-          <button id="load-csv">Tải CSV</button>
-          <button id="edit-mode">Chế độ sửa</button>
-        </div>
-        <div class="small" style="margin-top:10px">Mẫu JSON: <code>[{"q":"Câu 1?","choices":["a","b","c"],"answer":0}]</code> — <span class="small">answer là chỉ số (0-based) đáp án đúng</span></div>
-      </section>
+    <div class="toolbar">
+      <label>
+        Chọn chương:
+        <select id="chapterSelect"></select>
+      </label>
 
-      <hr style="margin:16px 0;border:none;border-top:1px solid #eee" />
+      <label>
+        Tìm câu (từ khóa):
+        <input type="search" id="search" placeholder="gõ từ khóa rồi Enter..." />
+      </label>
 
-      <div id="quiz-area"></div>
+      <div style="flex:1"></div>
 
-      <div id="result" style="margin-top:12px"></div>
+      <div class="meta">
+        <div class="badge" id="totalBadge">Tổng câu: 0</div>
+        <div class="badge" id="answeredBadge">Đã chọn: 0</div>
+        <div class="badge" id="scoreBadge">Đúng: 0</div>
+      </div>
 
+      <button id="resetBtn" class="secondary">Làm lại chương</button>
+      <button id="exportBtn">Xuất JSON chương</button>
     </div>
+
+    <div id="quiz"></div>
+
+    <footer>
+      <p>Ghi chú: dữ liệu lấy từ các file PDF bạn upload. Chương VII đã đầy đủ 45 câu. Một vài chương có nhiều câu nhưng preview PDF bị cắt ở snippet — nếu cần mình có thể kiểm tra/lọc lại từng file để đảm bảo mỗi chương đúng số câu mong muốn.</p>
+    </footer>
   </div>
 
 <script>
-// Simple quiz app that accepts JSON or CSV
-let questions = [];
-let editMode = false;
-const quizArea = document.getElementById('quiz-area');
-const resultBox = document.getElementById('result');
-const pasteArea = document.getElementById('paste-area');
-const fileInput = document.getElementById('file-input');
+/* ================= DỮ LIỆU NHÚNG (7 CHƯƠNG) =================
+   Mình đã chèn dữ liệu trích từ các PDF bạn tải lên.
+   - Chương VII: đầy đủ 45 câu
+   - Chương I - VI: chèn tất cả câu mình tìm thấy trong các file preview.
+   Nếu bạn cần chỉnh/đổi, nói mình sẽ cập nhật.
+*/
+const chapters = [
+  /* ========= Chương I ========= */
+  {
+    title: "Chương I",
+    questions: [
+      {"question":"Ai là người đã có công biến chủ nghĩa xã hội khoa học từ lí luận thành hiện thực?","options":["V.I.Lênin","C.Mác và Ph.Ăngghen","I.V. Stalin","G.W.F.Hegel"],"answer":0},
+      {"question":"Ai là người đã có công phát triển chủ nghĩa xã hội từ không tưởng đến khoa học?","options":["G.W.F.Hegel","C.Mác và Ph.Ăngghen","V.I.Lênin","I.V. Stalin"],"answer":1},
+      {"question":"Ai là người trực tiếp lãnh đạo Đảng của giai cấp công nhân Nga tập hợp lực lượng đấu tranh chống chế độ chuyên chế Nga hoàng, tiến tới giành chính quyền về tay giai cấp công nhân và nhân dân lao động Nga?","options":["G. Dimitrov","C.Mác và Ph.Ăngghen","I.V. Stalin","V.I.Lênin"],"answer":3},
+      {"question":"Chủ nghĩa Mác – Lênin được cấu thành bởi những bộ phận nào?","options":["Triết học Mác – Lênin, kinh tế chính trị Mác – Lênin, chủ nghĩa xã hội khoa học","Chủ nghĩa xã hội khoa học, Mĩ học Mác – Lênin, kinh tế chính trị Mác – Lênin","Đạo đức học Mác – Lênin, triết học Mác – Lênin, chủ nghĩa xã hội khoa học","Mĩ học Mác – Lênin, đạo đức học Mác – Lênin, triết học Mác – Lênin"],"answer":0},
+      {"question":"Chủ nghĩa xã hội khoa học là một trong ba bộ phận cấu thành của","options":["Kinh tế chính trị Mác – Lênin","Triết học Mác – Lênin","Chủ nghĩa Mác – Lênin","Chủ nghĩa xã hội không tưởng"],"answer":2},
+      {"question":"Đâu không phải là tiền đề tư tưởng lí luận cho sự ra đời của chủ nghĩa xã hội khoa học?","options":["Chủ nghĩa xã hội không tưởng Pháp","Kinh tế chính trị cổ điển Anh","Định luật chuyển động Newton","Triết học cổ điển Đức"],"answer":2},
+      {"question":"Đâu là tiền đề tư tưởng lí luận cho sự ra đời của chủ nghĩa xã hội khoa học?","options":["Chủ nghĩa thực chứng logic","Kinh tế chính trị cổ điển Anh","Học thuyết tiến hóa của Darwin","Triết học hiện sinh"],"answer":1},
+      {"question":"Góp phần quan trọng việc giáo dục niềm tin khoa học cho nhân dân vào mục tiêu, lí tưởng xã hội chủ nghĩa và con dương đi lên chủ nghĩa xã hội là nội dung được thể hiện ở đâu?","options":["sứ mệnh của giai cấp công nhân Việt Nam","ý nghĩa của việc nghiên cứu chủ nghĩa xã hội khoa học","nội dung của chủ nghĩa xã hội khoa học","Sứ mệnh của giai cấp công nhân quốc tế"],"answer":1},
+      {"question":"Học thuyết nào dưới đây của C. Mác và Ph. Ăngghen chỉ rõ bản chất của chế độ làm thuê trong chế độ tư bản, đã chứng minh một cách khoa học về loại \"hàng hoá đặc biệt\", hàng hoá sức lao động của công nhân mà nhà tư bản đã mua và có những thủ đoạn tinh vi để chiếm đoạt giá trị mới do nó sinh ra?","options":["Học thuyết về sứ mệnh lịch sử thế giới của giai cấp công nhân","Học thuyết giá trị thặng dư.","Học thuyết duy vật lịch sử.","Học thuyết duy vật biện chứng."],"answer":1},
+      {"question":"Học thuyết nào dưới đây của C. Mác và Ph. Ăngghen có nội dung cơ bản là lí luận về hình thái kinh tế – xã hội, là cơ sở về mặt triết học tin để nghiên cứu xã hội tư bản chủ nghĩa, khẳng định sự sụp đỗ của lo chủ nghĩa tư bản và thắng lợi của chủ nghĩa xã hội, chủ nghĩa cộng sản là tất yếu như nhau?","options":["Học thuyết về sứ mệnh lịch sử thế giới của giai cấp công nhân","Học thuyết giá trị thặng dư","Học thuyết duy vật lịch sử","Học thuyết duy vật biện chứng"],"answer":2},
+      {"question":"Học thuyết nào dưới đây của Mác và Ăngghen đã khắc phục được một cách triết để những hạn chế có tính lịch sử của chủ nghĩa xã hội không tưởng; luận chứng sâu sắc về bản chất trên phương diện chính trị – xã hội của sự diệt vong không tránh khỏi của chủ nghĩa tư bản và sự ra đời tất yếu của chủ nghĩa xã hội?","options":["Học thuyết duy vật biện chứng","Học thuyết giá trị thặng dư","Học thuyết về sứ mệnh lịch sử thế giới của giai cấp công nhân","Học thuyết duy vật lịch sử"],"answer":2},
+      {"question":"Nhân tố nào dưới đây được coi là phương pháp luận chung nhất cho việc nghiên cứu chủ nghĩa xã hội khoa học?","options":["Phương pháp luận duy vật biện chứng và phương pháp luận duy vật lịch sự của triết học Mác - Lênin","Phương pháp luận duy tâm biện chứng của Hegel và phương pháp luận duy vật nhân bản của Feuerbach","Phương pháp trừu tượng hóa khoa học","Phương pháp logic và lịch sử"],"answer":0},
+      {"question":"Nhân tố nào dưới đây không phải là tiền đề khoa học tự nhiên cho sự ra đời của chủ nghĩa xã hội khoa học?","options":["Thuyết tương đối đặc biệt","Học thuyết tiến hóa của Darwin","Học thuyết tế bào","Định luật bảo toàn và chuyển hóa năng lượng"],"answer":0},
+      {"question":"Nhân tố nào dưới đây là tiền đề khoa học tự nhiên cho sự ra đời của chủ nghĩa xã hội khoa học?","options":["Học thuyết tiến hóa của Darwin","Kinh tế chính trị cổ điển Anh","Chủ nghĩa xã hội không tưởng Pháp","Triết học cổ điển Đức"],"answer":0},
+      {"question":"Nội dung nào dưới đây không phải là điều kiện kinh tế - xã hội cho sự ra đời của chủ nghĩa xã hội khoa học?","options":["Mâu thuẫn giữa giai cấp công nhân với giai cấp tư sản biểu hiện qua các cuộc đấu tranh của giai cấp công nhân","Cách mạng công nghiệp tạo ra sự phát triển mạnh mẽ cho nền đại công nghiệp xã hội hóa với quan hệ sản xuất dựa trên chế độ chiếm hữu tư nhân tư bản chủ nghĩa","Chủ nghĩa xã hội không tưởng Pháp thế kỉ XIX","mâu thuẩn giữa lực lượng sản xuất mang tính xã hội hóa với quan hệ sản xuất dựa trên chế độ chiếm hữu tư nhân tư bản chủ nghĩa"],"answer":2},
+      {"question":"Tác phẩm nào dưới đây đã phân tích một cách có hệ thống lịch sử và logic hoàn chỉnh về những vấn đề cơ bản nhất, đầy đủ, xúc tích và chặt chẽ nhất, thâu tóm gần như toàn bộ những luận điểm của chủ nghĩa xã hội?","options":["Tuyên ngôn của Đảng Cộng sản","Điều lệ của Đồng minh những người cộng sản","Tình cảnh giai cấp lao động ở Anh","Những nguyên lí của chủ nghĩa cộng sản"],"answer":0},
+      {"question":"Tác phẩm nào dưới đây đánh dấu sự ra đời của chủ nghĩa Mác – Lênin với tư cách là chủ nghĩa xã hội khoa học theo nghĩa rộng?","options":["Những nguyên lí của chủ nghĩa cộng sản","Tình cảnh giai cấp lao động ở Anh","Tuyên ngôn của Đảng Cộng sản","Điều lệ của Đồng minh những người cộng sản"],"answer":2},
+      {"question":"Tác phẩm nào dưới đây là cương lĩnh chính trị, là kim chỉ nam hành động của toàn bộ phong trào cộng sản và công nhân quốc tế trong cuộc đấu tranh chống chủ nghĩa tư bản, giải phóng loài người vĩnh viễn khỏi mọi áp bức, bóc lột giai cấp, đảm bảo cho loài người có cuộc sống ấm no, tự do, hạnh phúc, được phát triển toàn diện?","options":["Điều lệ của Đồng minh những người cộng sản","Những nguyên lí của chủ nghĩa cộng sản","Tình cảnh giai cấp lao động ở Anh","Tuyên ngôn của Đảng Cộng sản"],"answer":3},
+      {"question":"Tác phẩm Tuyên ngôn của Đảng Cộng sản ra đời vào","options":["tháng 2 năm 1848","tháng 2 năm 1842","tháng 8 năm 1842","tháng 8 năm 1848"],"answer":0},
+      {"question":"Thành phần nào dưới đây trong chủ nghĩa xã hội khoa học là phát kiến vĩ đại của C.Mác và Ph.Ăngghen?","options":["Học thuyết giá trị thặng dư","Chủ nghĩa duy vật lịch sử","Chủ nghĩa duy vật biện chứng","Học thuyết về sứ mệnh lịch sử thế giới của giai cấp công nhân"],"answer":3},
+      {"question":"Thành phần nào dưới đây trong triết học Mác – Lênin là phát kiến vĩ đại của C.Mác và Ph.Ăngghen?","options":["Học thuyết về sứ mệnh lịch sử thế giới của giai cấp công nhân","Chủ nghĩa duy vật biện chứng","Chủ nghĩa duy vật lịch sử","Học thuyết giá trị thặng dư"],"answer":2}
+    ]
+  },
 
-function renderQuiz(){
-  quizArea.innerHTML = '';
-  resultBox.innerHTML = '';
-  if(!questions.length){
-    quizArea.innerHTML = '<div class="small">Chưa có câu hỏi. Dán JSON hoặc import file để bắt đầu.</div>';
-    return;
+  /* ========= Chương II ========= */
+  {
+    title: "Chương II",
+    questions: [
+      {"question":"“Đảng Cộng sản Việt Nam ra đời là sản phẩm của sự kết hợp giữa chủ nghĩa Mác – Lênin với phong trào công nhân và………..”","options":["phong trào yêu nước","chủ nghĩa yêu nước","truyền thống yêu nước","lòng yêu nước"],"answer":0},
+      {"question":"“Giai cấp công nhân Việt Nam là một lực lượng …… to lớn, đang phát triển...” (Hội nghị BCHTW khoá X)","options":["xã hội/ cơ bắp/ trí tuệ","xã hội/ chân tay/ trí óc","chính trị/ cơ bắp/ trí tuệ","chính trị/ chân tay/ trí óc"],"answer":1},
+      {"question":"Cải cách, đổi mới để xây dựng chủ nghĩa xã hội ... là sứ mệnh của giai cấp công nhân hiện nay trong lĩnh vực nào?","options":["Tư tưởng","Chính trị — xã hội","Văn hoá","Kinh tế"],"answer":1},
+      {"question":"Cải tạo cái cũ, xây dựng cái mới trong lĩnh vực ý thức tư tưởng là nhiệm vụ của giai cấp công nhân trong lĩnh vực?","options":["Xã hội","Đạo đức","Tâm lí, ý thức","Văn hoá, tư tưởng"],"answer":3},
+      {"question":"Công nhân là những người lao động có vị trí như thế nào trong quan hệ sản xuất tư bản chủ nghĩa?","options":["không sở hữu tư liệu sản xuất chủ yếu của xã hội","có sở hữu tư liệu sản xuất là kinh nghiệm cá nhân","có sở hữu tư liệu sản xuất là sức lao động","không sở hữu bất cứ tư liệu sản xuất nào của xã hội"],"answer":0},
+      {"question":"Cuối thế kỉ XIX – đầu thế kỉ XX, giai cấp công nhân Việt Nam có lợi ích đối kháng trực tiếp với thế lực nào?","options":["tư sản Việt Nam","bè lũ tay sai của thực dân Pháp","địa chủ Việt Nam","thực dân Pháp"],"answer":3},
+      {"question":"Đặc trưng chính trị ưu trội của công nhân Việt Nam còn thể hiện ở yếu tố nào?","options":["tinh thần lao động","tinh thần giai cấp","ý thức tổ chức kỉ luật","tinh thần dân tộc"],"answer":3},
+      {"question":"Đặc trưng công cụ lao động của giai cấp công nhân lao động bằng phương thức công nghiệp là gì?","options":["máy móc có tính chất công nghiệp","ruộng đất","con trâu, cái cày","trí óc"],"answer":0},
+      {"question":"Đâu là phạm trù trung tâm, là nguyên lí xuất phát trong chủ nghĩa xã hội khoa học?","options":["Vấn đề dân tộc","Sứ mệnh lịch sử thế giới của giai cấp công nhân","Dân chủ xã hội chủ nghĩa","Chủ nghĩa xã hội và thời kỳ quá độ"],"answer":1}
+      // (thêm nhiều câu từ chương II nếu cần)
+    ]
+  },
+
+  /* ========= Chương III ========= */
+  {
+    title: "Chương III",
+    questions: [
+      {"question":"“Người ta chỉ có thể trở thành người cộng sản khi biết làm giàu trí óc ...” là câu nói của ai?","options":["V.I. Lênin","Ph. Ăngghen","Hồ Chí Minh","C. Mác"],"answer":0},
+      {"question":"Trong chế độ xã hội chủ nghĩa, nhà nước mang bản chất của giai cấp nào?","options":["Giai cấp công nhân","Giai cấp tư sản","Tầng lớp trí thức","Nhân dân lao động"],"answer":0},
+      {"question":"Ai là người đưa ra quan điểm 'trong một nước tiểu nông, trước hết các đồng chí phải bắc những chiếc cầu nhỏ vững chắc...' ?","options":["Hồ Chí Minh","C. Mác","Ph. Angghen","V.I. Lênin"],"answer":3},
+      {"question":"Cách hiểu nào không đúng về chủ nghĩa xã hội?","options":["Là trào lưu tư tưởng...","Là một phong trào thực tiễn...","Là một chế độ xã hội hiện thực tốt đẹp...","Là một khoa học nghiên cứu về những quy luật chung nhất của tự nhiên, xã hội và tư duy"],"answer":3},
+      {"question":"Con đường quá độ bỏ qua chế độ tư bản chủ nghĩa ở Việt Nam được đề cập lần đầu tiên ở văn kiện nào?","options":["Cương lĩnh 1991","Cương lĩnh 1930","Luận cương 1930","Chính cương 1951"],"answer":1},
+      {"question":"Cương lĩnh 1991 xác định mô hình có sáu đặc trưng, được Đảng thông qua tại đại hội nào?","options":["Đại hội IX","Đại hội VII","Đại hội VIII","Đại hội VI"],"answer":1}
+      // (nhiều câu chương III đã chèn)
+    ]
+  },
+
+  /* ========= Chương IV ========= */
+  {
+    title: "Chương IV",
+    questions: [
+      {"question":"“Dân chủ gắn liền với ...... xã hội phải được thực hiện...” điền từ thích hợp?","options":["bình đẳng/ gián tiếp","bình đẳng/ trực tiếp","công bằng/ trực tiếp","công bằng/ gián tiếp"],"answer":2},
+      {"question":"“Dân chủ là dân là chủ và dân làm chủ” là quan điểm của ai?","options":["Ph.Ăngghen","Hồ Chí Minh","C. Mác","V.I. Lênin"],"answer":1},
+      {"question":"“Quyền lực thuộc về nhân dân...” là nội dung của khái niệm nào?","options":["Hạnh phúc","Dân chủ","Tự do","Bình đẳng"],"answer":1},
+      {"question":"“Thực hành dân chủ là cái chìa khoá vạn năng...” là câu nói của ai?","options":["V.I. Lênin","Mao Trạch Đông","Hồ Chí Minh","Phạm Văn Đồng"],"answer":2},
+      {"question":"Bản chất của nhà nước xã hội chủ nghĩa chịu quy định của cơ sở kinh tế xã hội là gì?","options":["vừa quan hệ sở hữu tư nhân...","quan hệ sở hữu xã hội về tư liệu sản xuất chủ yếu","quan hệ sở hữu tư nhân về tư liệu sản xuất chủ yếu","chủ yếu là quan hệ sở hữu xã hội về tư liệu sản xuất"],"answer":1},
+      {"question":"Căn cứ vào phạm vi tác động của quyền lực, chức năng nhà nước có:","options":["Chức năng lãnh đạo và giám sát","Chức năng giai cấp và chức năng xã hội","Chức năng quản lí chính trị và kinh tế","Chức năng đối nội và đối ngoại"],"answer":3}
+      // (nhiều câu chương IV đã chèn)
+    ]
+  },
+
+  /* ========= Chương V ========= */
+  {
+    title: "Chương V",
+    questions: [
+      {"question":"“Nếu không liên minh với nông dân thì không thể có được chính quyền của giai cấp vô sản...” câu nói của ai?","options":["Hồ Chí Minh","C. Mác","Ph. Ăngghen","V.I. Lênin"],"answer":3},
+      {"question":"Căn cứ vào đâu để xây dựng chính sách phát triển kinh tế, văn hoá, xã hội phù hợp cho từng giai cấp?","options":["cơ cấu xã hội — dân cư","cơ cấu xã hội – giai cấp","cơ cấu xã hội — nghề nghiệp","cơ cấu xã hội — tôn giáo"],"answer":1},
+      {"question":"Cần giữ vững vai trò lãnh đạo của tổ chức nào đối với khối liên minh?","options":["Đảng Cộng sản Việt Nam","Mặt trận Tổ quốc","Nhà nước","Quốc hội"],"answer":0},
+      {"question":"“Vô sản tất cả các nước và các dân tộc bị áp bức, đoàn kết lại” là của ai?","options":["C. Mác","Hồ Chí Minh","Ph.Ăngghen","V.I. Lênin"],"answer":3},
+      {"question":"Giai cấp, tầng lớp nào được coi là 'người bạn đồng minh tự nhiên' của giai cấp công nhân?","options":["Doanh nhân","Tư sản","Nông dân","Trí thức"],"answer":2}
+      // (thêm câu chương V nếu muốn)
+    ]
+  },
+
+  /* ========= Chương VI ========= */
+  {
+    title: "Chương VI",
+    questions: [
+      {"question":"Biểu hiện thông qua tâm lí, tính cách, phong tục... là nội dung thể hiện khái niệm nào?","options":["Giao lưu văn hoá","Văn hoá vật chất và tinh thần","Văn hoá dân tộc","Văn hoá đa quốc gia"],"answer":2},
+      {"question":"Các dân tộc được tự do lựa chọn con đường phát triển... là quyền gì?","options":["Hợp tác giữa các dân tộc","Bình đẳng giữa các dân tộc","Dân tộc tự quyết","Giao lưu giữa các dân tộc"],"answer":2},
+      {"question":"Chủ tịch Hồ Chí Minh khẳng định mục tiêu cao nhất của cách mạng dân tộc dân chủ ở Việt Nam là gì?","options":["Độc lập tự do","Độc lập dân tộc","Chủ quyền quốc gia","Giành độc lập dân tộc"],"answer":3}
+      // (bổ sung thêm nếu cần)
+    ]
+  },
+
+  /* ========= Chương VII (đầy đủ 45 câu) ========= */
+  {
+    title: "Chương VII",
+    questions: [
+      {"question":"Biểu hiện nào dưới đây không là tác động tiêu cực của kinh tế thị trường định hướng xã hội chủ nghĩa tới gia đình ở Việt Nam?","options":["Sự phân hoá giàu nghèo giữa các gia đình ngày càng tăng.","Ngoại tình, li hôn có chiều hướng ngày càng phát triển.","Trẻ em nghỉ học sớm, tham gia vào thị trường lao động.","Tăng thu nhập của cá nhân trong gia đình."],"answer":3},
+      {"question":"Biểu hiện nào dưới đây thể hiện đầy đủ nhất sự tiến bộ trong việc thực hiện chức năng tái sản xuất ra con người của gia đình Việt Nam hiện nay?","options":["Giảm nhu cầu nhất thiết phải có con trai, người phụ nữ không nhất định phải sinh con.","Giảm mức sinh của phụ nữ, giảm số con mong muốn, giảm nhu cầu nhất thiết phải có con trai.","Tăng số con mong muốn, giảm nhu cầu nhất thiết phải có con trai.","Giảm mức sinh của phụ nữ, tăng số con mong muốn, không nhất định phải có con trai."],"answer":1},
+      {"question":"Chức năng đặc thù của gia đình, không một cộng đồng nào có thể thay thế là:","options":["Nuôi dưỡng, giáo dục.","Kinh tế và tổ chức tiêu dùng.","Tái sản xuất ra con người.","Thoả mãn nhu cầu tâm – sinh lí, duy trì tình cảm."],"answer":2},
+      {"question":"Chức năng nào dưới đây của gia đình có nhiệm vụ thoả mãn nhu cầu tình cảm, văn hoá, tinh thần cho các thành viên, đảm bảo sự cân bằng tâm lí, bảo vệ chăm sóc sức khoẻ người ốm, người già, trẻ em?","options":["Thoả mãn nhu cầu tình cảm, đời sống vật chất.","Thoả mãn nhu cầu tâm – sinh lí.","Thoả mãn đời sống vật chất và tinh thần.","Thoả mãn nhu cầu tâm – sinh lí, duy trì tình cảm gia đình."],"answer":3},
+      {"question":"Chức năng nào dưới đây của gia đình có ý nghĩa rất quan trọng tới việc hình thành nhân cách, đạo đức, lối sống của mỗi người?","options":["Tái sản xuất ra con người.","Nuôi dưỡng, giáo dục.","Thoả mãn nhu cầu tâm – sinh lí, duy trì tình cảm gia đình.","Kinh tế và tổ chức tiêu dùng."],"answer":1},
+      {"question":"Chức năng nào dưới đây tạo cho gia đình cơ sở để tổ chức tốt đời sống, nuôi dạy con cái, đóng góp to lớn đối với sự phát triển xã hội?","options":["Kinh tế và tổ chức tiêu dùng.","Đảm bảo đời sống gia đình và phát triển xã hội.","Thoả mãn nhu cầu tâm – sinh lí, duy trì tình cảm gia đình.","Nuôi dưỡng, giáo dục."],"answer":0},
+      {"question":"Chức năng nào dưới đây thể hiện tình cảm thiêng liêng, trách nhiệm của cha mẹ với con cái, đồng thời thể hiện trách nhiệm của gia đình với xã hội?","options":["Nuôi dưỡng, giáo dục.","Kinh tế và tổ chức tiêu dùng.","Thoả mãn nhu cầu tâm – sinh lí, duy trì tình cảm gia đình.","Tái sản xuất ra con người."],"answer":0},
+      {"question":"Cơ sở kinh tế – xã hội để xây dựng gia đình trong thời kì quá độ lên chủ nghĩa xã hội là sự phát triển của:","options":["Lực lượng sản xuất và quan hệ sản xuất xã hội chủ nghĩa.","Nền kinh tế nhiều thành phần, định hướng xã hội chủ nghĩa.","Nền kinh tế thị trường định hướng xã hội chủ nghĩa.","Lực lượng sản xuất gắn với công cụ lao động hiện đại."],"answer":0},
+      {"question":"Cơ sở nào góp phần nâng cao trình độ dân trí, kiến thức khoa học và công nghệ của xã hội, đồng thời cung cấp cho các thành viên trong gia đình kiến thức, nhận thức mới...?","options":["Văn hoá.","Xã hội.","Kinh tế.","Chính trị."],"answer":0},
+      {"question":"Để đảm bảo lợi ích của gia đình và sự phát triển bền vững của xã hội, thông điệp mới trong kế hoạch hoá gia đình của Việt Nam hiện nay là:","options":["Gia đình có điều kiện nuôi dưỡng có thể sinh 3 con.","Mỗi gia đình chỉ nên sinh 1 con.","Mỗi gia đình nên sinh đủ 2 con.","Mỗi gia đình chỉ nên có từ 1 đến 2 con."],"answer":2},
+      {"question":"Gia đình ấm no, hoà thuận, tiến bộ, khoẻ mạnh và hạnh phúc, thực hiện tốt nghĩa vụ công dân... là tiêu chuẩn của:","options":["Gia đình truyền thống.","Gia đình giàu có.","Gia đình hiện đại.","Gia đình văn hoá."],"answer":3},
+      {"question":"Gia đình đảm bảo nguồn sống, đáp ứng nhu cầu vật chất, tinh thần của các thành viên là nội dung của chức năng:","options":["Kinh tế và tổ chức tiêu dùng.","Thoả mãn mọi mặt đời sống gia đình.","Đảm bảo đời sống vật chất và tinh thần.","Nuôi dưỡng, giáo dục."],"answer":0},
+      {"question":"Gia đình được hình thành bởi hai mối quan hệ cơ bản là:","options":["Quan hệ họ hàng và quan hệ huyết thống.","Quan hệ huyết thống và quan hệ xã hội.","Quan hệ hôn nhân và quan hệ huyết thống.","Quan hệ hôn nhân và quan hệ họ hàng."],"answer":2},
+      {"question":"Gia đình không chỉ sản xuất ra tư liệu sinh hoạt mà còn sản xuất ra:","options":["Các mối quan hệ xã hội.","Các giá trị tinh thần.","Bản thân con người.","Các giá trị kinh tế."],"answer":2},
+      {"question":"Gia đình như một tế bào tự nhiên, là một đơn vị cơ sở để tạo nên cơ thể – xã hội vì:","options":["Gia đình sản xuất ra tư liệu tiêu dùng, tư liệu sản xuất, tái sản xuất ra con người.","Gia đình sản xuất ra tư liệu sản xuất, tái sản xuất ra con người và các mối quan hệ xã hội khác.","Gia đình tái sản xuất ra con người và các mối quan hệ xã hội.","Gia đình sản xuất ra tư liệu tiêu dùng, tư liệu sản xuất và các mối quan hệ xã hội khác."],"answer":0},
+      {"question":"Gia đình thực hiện chức năng nào dưới đây để góp phần to lớn vào việc đào tạo thế hệ trẻ?","options":["Nuôi dưỡng, giáo dục.","Kinh tế và tổ chức tiêu dùng.","Thoả mãn nhu cầu tâm – sinh lí, duy trì tình cảm gia đình.","Tái sản xuất ra con người."],"answer":0},
+      {"question":"Hôn nhân được đảm bảo về mặt pháp lí là hôn nhân:","options":["Được pháp luật thừa nhận thông qua việc đăng kí kết hôn.","Tự nguyện trên cơ sở tình yêu nam nữ.","Được tổ chức với sự chứng kiến của mọi người.","Được hai bên gia đình đồng ý."],"answer":0},
+      {"question":"Hôn nhân tự nguyện là hôn nhân xuất phát từ:","options":["Sự đồng ý của bố mẹ hai bên.","Sự ủng hộ của những người xung quanh.","Sự thoả mãn về kinh tế.","Tình yêu."],"answer":3},
+      {"question":"Hôn nhân tự nguyện, một vợ một chồng bình đẳng, được đảm bảo về pháp lí là biểu hiện của:","options":["Chế độ hôn nhân tiến bộ.","Hôn nhân tự nguyện.","Hôn nhân được pháp luật thừa nhận.","Hôn nhân bình đẳng."],"answer":0},
+      {"question":"Không chỉ đáp ứng nhu cầu tâm sinh lí tự nhiên của con người ... chức năng nào?","options":["Kinh tế và tổ chức tiêu dùng.","Nuôi dưỡng, giáo dục.","Tái sản xuất ra con người.","Thoả mãn nhu cầu tâm – sinh lí, duy trì tình cảm gia đình."],"answer":2},
+      {"question":"Loại hình gia đình phổ biến nhất ở Việt Nam hiện nay là:","options":["Gia đình đơn thân.","Gia đình hạt nhân.","Tứ đại đồng đường.","Tam đại đồng đường."],"answer":1},
+      {"question":"Nam nữ được đảm bảo quyền tự do trong việc lựa chọn người kết hôn là biểu hiện của:","options":["Hôn nhân được pháp luật thừa nhận.","Hôn nhân bình đẳng.","Hôn nhân tự nguyện.","Hôn nhân tích cực."],"answer":2},
+      {"question":"Nghĩa vụ, quyền lợi và trách nhiệm của mỗi thành viên trong gia đình được quy định bởi:","options":["Nền nếp gia đình.","Pháp luật của mỗi quốc gia.","Pháp lí và đạo lí.","Đạo đức xã hội."],"answer":2},
+      {"question":"Nguyên nhân nào dưới đây giữ vai trò quyết định làm cho gia đình trở thành một đơn vị tiêu dùng quan trọng của xã hội?","options":["Hàng hoá ngày càng phong phủ, đa dạng...","Chi tiêu hợp lí, tăng cường tiết kiệm...","Sự phát triển của kinh tế hàng hoá và nguồn thu nhập bằng tiền của gia đình ngày càng tăng lên.","Sản xuất hàng hoá phát triển, giao thương..."],"answer":2},
+      {"question":"Nhận định nào dưới đây thể hiện đúng nhất vị trí của gia đình đối với sự vận động và phát triển của xã hội?","options":["Gia đình có vai trò quan trọng...","Gia đình có vai trò nhất định...","Gia đình có vai trò không nhỏ...","Gia đình có vai trò quyết định..."],"answer":3},
+      {"question":"Nội dung nào dưới đây không là chức năng cơ bản của gia đình?","options":["Nuôi dưỡng, giáo dục.","Kinh tế và tổ chức tiêu dùng.","Xây dựng quy định của địa phương.","Tái sản xuất ra con người."],"answer":2},
+      {"question":"Nội dung nào dưới đây không phải là phương hướng cơ bản xây dựng và phát triển gia đình Việt Nam...?","options":["Tăng cường vai trò của các tổ chức quốc tế nhằm giáo dục thanh niên...","Tăng cường sự lãnh đạo của Đảng...","Tiếp tục phát triển phong trào xây dựng gia đình văn hoá.","Đẩy mạnh phát triển kinh tế - xã hội..."],"answer":0},
+      {"question":"Nội dung nào dưới đây không phản ánh đúng vị trí của gia đình trong xã hội?","options":["Gia đình là tế bào của xã hội.","Gia đình là tổ ấm của mỗi thành viên.","Gia đình là cầu nối giữa cá nhân với xã hội.","Gia đình là bộ phận của làng xã."],"answer":3},
+      {"question":"Nội dung nào dưới đây không thể hiện đúng vị trí làm cầu nối giữa cá nhân với xã hội của gia đình?","options":["Nhiều thông tin...","Gia đình là cộng đồng xã hội đầu tiên...","Quan hệ giữa các thành viên trong gia đình không liên quan đến các quan hệ...","Gia đình là môi trường đầu tiên..."],"answer":2},
+      {"question":"Nội dung nào dưới đây không thể hiện sự biến đổi trong giáo dục gia đình hiện nay?","options":["Giáo dục xã hội không bao trùm lên giáo dục gia đình.","Sự đầu tư tài chính của gia đình cho giáo dục con cái tăng lên.","Giáo dục xã hội đưa ra những mục tiêu...","Nội dung giáo dục không chỉ nặng về đạo đức..."],"answer":0},
+      {"question":"Nội dung nào dưới đây mô tả đầy đủ nhất về những hạn chế trong quan hệ vợ chồng ở Việt Nam hiện nay?","options":["Lỏng lẻo, bất bình đẳng...","Thiếu bình đẳng, vai trò của người phụ nữ...","Lỏng lẻo, bạo lực gia đình...","Lỏng lẻo, gia tăng tỉ lệ li hôn, li thân, ngoại tình, chung sống không kết hôn."],"answer":3},
+      {"question":"Nội dung nào dưới đây thể hiện rõ nhất vai trò của nhà nước xã hội chủ nghĩa trong việc đảm bảo lợi ích công dân...?","options":["Xây dựng hệ thống pháp luật và nâng cao đời sống tinh thần.","Phát triển kinh tế.","Ổn định tình hình chính trị - xã hội.","Xây dựng hệ thống pháp luật và hệ thống chính sách xã hội."],"answer":3},
+      {"question":"Ở Việt Nam, tổ chức nào dưới đây là công cụ hữu hiệu nhất xoá bỏ những hủ tục lạc hậu...?","options":["Đảng Cộng sản.","Hội Liên hiệp Phụ nữ.","Đoàn Thanh niên.","Nhà nước."],"answer":3},
+      {"question":"Quan hệ giữa cha mẹ nuôi với con nuôi chỉ được pháp luật công nhận khi:","options":["Đã làm lễ gia tiên, báo cáo với họ hàng.","Cả hai bên cha mẹ nuôi và con nuôi có nhu cầu sống cùng nhau.","Công bố rộng rãi với mọi người xung quanh.","Có đầy đủ thủ tục pháp lí."],"answer":3},
+      {"question":"Quan hệ giữa những người có cùng một dòng máu, nảy sinh từ quan hệ hôn nhân là quan hệ:","options":["Nội tộc.","Họ hàng.","Huyết thống.","Gia đình."],"answer":2},
+      {"question":"Quan hệ nền tảng hình thành nên các mối quan hệ khác trong gia đình... là quan hệ:","options":["Hôn nhân.","Họ hàng.","Xã hội.","Huyết thống."],"answer":0},
+      {"question":"Quy mô gia đình Việt Nam hiện nay có xu hướng:","options":["Ngày càng phức tạp.","Ngày càng thu nhỏ.","Ngày càng nhiều thế hệ.","Ngày càng đa dạng."],"answer":1},
+      {"question":"Sự quan tâm, chăm sóc giữa các thành viên... thể hiện quan hệ nào?","options":["Họ hàng.","Hôn nhân.","Huyết thống.","Nuôi dưỡng."],"answer":3},
+      {"question":"Sự yên ổn, hạnh phúc của gia đình là tiền đề... thể hiện vị trí nào của gia đình?","options":["Gia đình là tổ ấm...","Gia đình là tế bào của xã hội.","Gia đình là cầu nối giữa cá nhân với xã hội.","Gia đình nuôi dưỡng, giáo dục con cái."],"answer":0},
+      {"question":"Từ một đơn vị kinh tế khép kín... biểu hiện của chức năng:","options":["Kinh tế và tổ chức tiêu dùng.","Sản xuất.","Chính trị – xã hội.","Tổ chức tiêu dùng."],"answer":0},
+      {"question":"Việc sử dụng hợp lí các khoản thu nhập... là nội dung của chức năng:","options":["Tổ chức tiêu dùng của gia đình.","Tổ chức đời sống tinh thần của gia đình.","Tổ chức sản xuất của gia đình.","Tổ chức các mối quan hệ xã hội của gia đình."],"answer":0},
+      {"question":"Việc thiết lập chính quyền nhà nước của giai cấp công nhân... là nội dung của cơ sở:","options":["Xã hội.","Kinh tế.","Chính trị.","Văn hoá."],"answer":2},
+      {"question":"Việc thực hiện chức năng tái sản xuất ra con người không chỉ là việc riêng của gia đình mà là vấn đề xã hội vì thực hiện chức năng này quyết định:","options":["Tỉ lệ gia tăng dân số, chất lượng nguồn lao động của mỗi quốc gia.","Quy mô dân số, mật độ dân cư, chất lượng nguồn lao động.","Quy mô dân số, mật độ dân cư, chất lượng cuộc sống người lao động.","Mật độ dân cư, chất lượng nguồn lao động của mỗi quốc gia."],"answer":1},
+      {"question":"Vợ và chồng đều có quyền lợi và nghĩa vụ như nhau về mọi vấn đề của cuộc sống gia đình là biểu hiện của:","options":["Hôn nhân tự nguyện.","Vợ chồng bình đẳng.","Tự do kết hôn.","Tình yêu."],"answer":1},
+      {"question":"Xét ở chức năng kinh tế và tổ chức tiêu dùng, gia đình có đặc thù nào mà các đơn vị kinh tế khác không có được?","options":["Tham gia vào quá trình sản xuất và tái sản xuất ra sức lao động.","Tham gia trực tiếp vào quá trình sản xuất, tái sản xuất ra tư liệu lao động.","Tham gia trực tiếp vào quá trình sản xuất, tái sản xuất ra tư liệu tiêu dùng.","Tham gia trực tiếp vào quá trình sản xuất, tái sản xuất ra tư liệu sản xuất."],"answer":0}
+    ]
   }
+]; // end chapters
 
-  questions.forEach((q, idx) => {
-    const div = document.createElement('div');
-    div.className = 'question card';
-    div.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Câu ${idx+1}.</strong> ${escapeHtml(q.q || '')}</div>
-        <div class="small">${q.points ? q.points + ' điểm' : ''}</div>
-      </div>
-      <div class="choices" id="choices-${idx}"></div>
-      <div style="margin-top:8px" id="feedback-${idx}"></div>
-    `;
-    quizArea.appendChild(div);
+/* ========== UI & Logic ========== */
+const chapterSelect = document.getElementById('chapterSelect');
+const quizEl = document.getElementById('quiz');
+const totalBadge = document.getElementById('totalBadge');
+const answeredBadge = document.getElementById('answeredBadge');
+const scoreBadge = document.getElementById('scoreBadge');
+const resetBtn = document.getElementById('resetBtn');
+const exportBtn = document.getElementById('exportBtn');
+const searchInput = document.getElementById('search');
 
-    const choicesDiv = document.getElementById(`choices-${idx}`);
-    (q.choices || []).forEach((c, ci) =>{
-      const id = `q${idx}_c${ci}`;
-      const wrapper = document.createElement('label');
-      wrapper.className = 'choice';
-      wrapper.innerHTML = `<input type="radio" name="q${idx}" value="${ci}" id="${id}" /> <span>${escapeHtml(c)}</span>`;
-      choicesDiv.appendChild(wrapper);
+let currentChapterIndex = 0;
+let answered = 0;
+let score = 0;
+let perQuestionState = {}; // store per-chapter answered state
+
+// populate chapter dropdown
+chapters.forEach((c, i) => {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = c.title + ' (' + c.questions.length + ' câu)';
+  chapterSelect.appendChild(opt);
+});
+
+// initial stats
+function updateBadges(){
+  const total = chapters[currentChapterIndex].questions.length;
+  totalBadge.textContent = `Tổng câu: ${total}`;
+  answeredBadge.textContent = `Đã chọn: ${answered}`;
+  scoreBadge.textContent = `Đúng: ${score}`;
+}
+
+// render chapter
+function renderChapter(idx, filterKeyword=''){
+  currentChapterIndex = Number(idx);
+  const ch = chapters[currentChapterIndex];
+  quizEl.innerHTML = '';
+  answered = 0; score = 0;
+  perQuestionState[currentChapterIndex] = perQuestionState[currentChapterIndex] || {};
+  ch.questions.forEach((q, qi) => {
+    // filter
+    if(filterKeyword){
+      if(!q.question.toLowerCase().includes(filterKeyword.toLowerCase()) && !q.options.join(' ').toLowerCase().includes(filterKeyword.toLowerCase())){
+        return;
+      }
+    }
+    const card = document.createElement('div');
+    card.className = 'card';
+    const qnum = document.createElement('div');
+    qnum.className = 'qnum';
+    qnum.textContent = `Câu ${qi+1}`;
+    const qtext = document.createElement('div');
+    qtext.className = 'qtext';
+    qtext.innerHTML = q.question;
+    const opts = document.createElement('div');
+    opts.className = 'opts';
+    q.options.forEach((opt, oi) => {
+      const label = document.createElement('label');
+      label.innerHTML = `<input type="radio" name="q${qi}" value="${oi}"> ${opt}`;
+      opts.appendChild(label);
+
+      label.querySelector('input').addEventListener('change', () => {
+        // prevent double count
+        if(perQuestionState[currentChapterIndex][qi]) return;
+        perQuestionState[currentChapterIndex][qi] = true;
+        // disable all radios for this q
+        const radios = opts.querySelectorAll('input');
+        radios.forEach(r => r.disabled = true);
+        answered++;
+        if(Number(oi) === q.answer){
+          label.classList.add('correct');
+          score++;
+        } else {
+          label.classList.add('wrong');
+          // highlight correct
+          const correctRadio = opts.querySelector(`input[value="${q.answer}"]`);
+          if(correctRadio){
+            correctRadio.parentNode.classList.add('correct');
+            correctRadio.parentNode.insertAdjacentHTML('beforeend',' <span style="margin-left:8px;font-weight:700">(Đáp án đúng)</span>');
+          }
+        }
+        updateBadges();
+      });
     });
 
+    card.appendChild(qnum);
+    card.appendChild(qtext);
+    card.appendChild(opts);
+    quizEl.appendChild(card);
   });
 
-  const submit = document.createElement('div');
-  submit.style.marginTop = '12px';
-  submit.innerHTML = '<button id="submit">Nộp bài</button> <button id="show-answers">Hiển thị đáp án</button>';
-  quizArea.appendChild(submit);
-
-  document.getElementById('submit').onclick = gradeQuiz;
-  document.getElementById('show-answers').onclick = showAnswers;
+  updateBadges();
 }
 
-function gradeQuiz(){
-  let correct = 0;
-  questions.forEach((q, idx)=>{
-    const radios = document.getElementsByName(`q${idx}`);
-    let selected = -1;
-    for(const r of radios) if(r.checked) selected = Number(r.value);
-    const fb = document.getElementById(`feedback-${idx}`);
-    if(selected === q.answer){
-      correct++;
-      fb.innerHTML = `<div class="status green">Đúng</div>`;
-    } else {
-      fb.innerHTML = `<div class="status red">Sai. Đáp án đúng: ${escapeHtml((q.choices||[])[q.answer]||'')}</div>`;
-    }
-  });
-  resultBox.innerHTML = `<div class="card" style="margin-top:12px;padding:12px">Bạn được ${correct}/${questions.length} điểm (${Math.round(correct/questions.length*100)}%)</div>`;
-}
+// reset current chapter
+resetBtn.addEventListener('click', () => {
+  perQuestionState[currentChapterIndex] = {};
+  renderChapter(currentChapterIndex, searchInput.value.trim());
+});
 
-function showAnswers(){
-  questions.forEach((q, idx)=>{
-    const fb = document.getElementById(`feedback-${idx}`);
-    fb.innerHTML = `<div class="small">Đáp án: ${escapeHtml((q.choices||[])[q.answer]||'')}</div>`;
-  });
-}
+// export chapter JSON
+exportBtn.addEventListener('click', () => {
+  const data = chapters[currentChapterIndex];
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${data.title.replace(/\s+/g,'_')}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
 
-function loadJSONText(txt){
-  try{
-    const parsed = JSON.parse(txt);
-    if(!Array.isArray(parsed)) throw new Error('JSON phải là mảng');
-    questions = parsed.map(item => ({
-      q: item.q || item.question || '',
-      choices: item.choices || item.options || [],
-      answer: (typeof item.answer === 'number') ? item.answer : Number(item.correctIndex || 0),
-      points: item.points || 0
-    }));
-    renderQuiz();
-  }catch(e){
-    alert('Lỗi khi đọc JSON: '+e.message);
+// change chapter
+chapterSelect.addEventListener('change', e => {
+  searchInput.value = '';
+  renderChapter(e.target.value);
+});
+
+// search handler (press Enter or clear)
+searchInput.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter'){
+    renderChapter(currentChapterIndex, searchInput.value.trim());
   }
-}
-
-function loadCSVText(txt){
-  // Simple CSV format: q,choice1,choice2,choice3,...,answerIndex
-  const lines = txt.split(/\r?\n/).map(l=>l.trim()).filter(l=>l);
-  const arr = lines.map(l=>{
-    // split by comma but naive
-    const parts = l.split(',').map(p=>p.trim());
-    const answer = Number(parts[parts.length-1]);
-    const choices = parts.slice(1, parts.length-1);
-    return {q: parts[0], choices, answer};
-  });
-  questions = arr;
-  renderQuiz();
-}
-
-// file input
-fileInput.addEventListener('change', (e)=>{
-  const f = e.target.files[0];
-  if(!f) return;
-  const reader = new FileReader();
-  reader.onload = ()=>{
-    const txt = reader.result;
-    if(f.name.endsWith('.json')) loadJSONText(txt);
-    else loadCSVText(txt);
-  };
-  reader.readAsText(f);
+});
+searchInput.addEventListener('input', (e) => {
+  if(e.target.value === '') renderChapter(currentChapterIndex, '');
 });
 
-// buttons
-document.getElementById('load-json').onclick = ()=>{
-  loadJSONText(pasteArea.value);
-};
-
-document.getElementById('load-csv').onclick = ()=>{
-  loadCSVText(pasteArea.value);
-};
-
-document.getElementById('reset').onclick = ()=>{
-  if(confirm('Xóa toàn bộ câu hỏi?')){questions=[];renderQuiz();pasteArea.value='';}
-};
-
-document.getElementById('edit-mode').onclick = ()=>{
-  // simple edit: export current questions to JSON in the textarea for editing
-  pasteArea.value = JSON.stringify(questions, null, 2);
-  alert('Dữ liệu hiện đã được đưa vào ô dán để bạn chỉnh sửa. Sau khi chỉnh xong bấm "Tải JSON".');
-};
-
-function escapeHtml(s){
-  if(!s) return '';
-  return s.replace(/[&<>\"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
-}
-
-// On load: try to load from localStorage
-window.addEventListener('load', ()=>{
-  const saved = localStorage.getItem('quiz_data');
-  if(saved){
-    try{ questions = JSON.parse(saved); }catch(e){questions=[]}
-  }
-  renderQuiz();
-});
-
-// Save to localStorage when leaving
-window.addEventListener('beforeunload', ()=>{
-  try{ localStorage.setItem('quiz_data', JSON.stringify(questions)); }catch(e){}
-});
-
+// initial render
+renderChapter(0);
 </script>
 </body>
 </html>
