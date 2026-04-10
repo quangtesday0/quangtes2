@@ -1,7 +1,40 @@
-<meta http-equiv="refresh" content="0; url=https://quang06.id.vn">
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Redirect...</title>
 </head>
-<body>
-  <p>Đang chuyển hướng................</p>
-  <p>Đợi chờ là hạnh phúc nhéeeeeeeeeeeee......</p>
+<body style="text-align:center;background:#111;color:#fff;font-family:Arial;padding-top:50px;">
+
+  <h1>Đợi tớ xíuuu...</h1>
+  <p>Còn <span id="count">5</span> giây nữa</p>
+
+  <img id="cat" style="max-width:400px;width:90%;border-radius:12px;">
+
+  <script>
+    // danh sách mã mèo
+    const codes = [301, 302, 307, 308, 404, 500, 400, 401,402,403,404,405,406,407,408,409,510,511,512,513];
+
+    // random 1 mã
+    const randomCode = codes[Math.floor(Math.random() * codes.length)];
+
+    // gán ảnh
+    document.getElementById("cat").src = `https://http.cat/${randomCode}`;
+
+    // countdown
+    let timeLeft = 5;
+    const count = document.getElementById("count");
+
+    const timer = setInterval(() => {
+      timeLeft--;
+      count.textContent = timeLeft;
+
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        window.location.href = "https://tenmien-dich.com";
+      }
+    }, 1000);
+  </script>
+
 </body>
 </html>
